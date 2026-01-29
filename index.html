@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCBA AOI检验比对工具</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-search"></i> PCBA AOI检验比对系统</h1>
+            <div class="header-controls">
+                <button id="saveSession" class="btn btn-secondary">
+                    <i class="fas fa-save"></i> 保存会话
+                </button>
+                <button id="loadSession" class="btn btn-secondary">
+                    <i class="fas fa-folder-open"></i> 加载会话
+                </button>
+                <select id="inspectionPresets" class="dropdown">
+                    <option value="">选择检测预设</option>
+                    <option value="resistor">电阻检测</option>
+                    <option value="capacitor">电容检测</option>
+                    <option value="ic">IC芯片检测</option>
+                    <option value="connector">连接器检测</option>
+                </select>
+            </div>
+        </header>
+
+        <main>
+            <!-- 标准样板区 -->
+            <section class="panel standard-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-clipboard-check"></i> 标准样板</h2>
+                    <div class="panel-controls">
+                        <button id="uploadStandard" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> 上传样板
+                        </button>
+                        <button id="captureStandard" class="btn btn-primary">
+                            <i class="fas fa-camera"></i> 拍摄样板
+                        </button>
+                        <button id="clearStandard" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> 清除
+                        </button>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <canvas id="standardCanvas"></canvas>
+                    <div class="placeholder" id="standardPlaceholder">
+                        <i class="fas fa-file-upload fa-3x"></i>
+                        <p>点击上传或拍摄标准样板</p>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="info-item">
+                        <span class="label">图像尺寸:</span>
+                        <span id="standardDimensions">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">元件数量:</span>
+                        <span id="standardComponentCount">0</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">上传时间:</span>
+                        <span id="standardTimestamp">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 检测比对区 -->
+            <section class="panel inspection-panel">
+                <div class="panel-header">
+                    <h2><i class="fas fa-search"></i> 检测比对</h2>
+                    <div class="panel-controls">
+                        <button id="startCamera" class="btn btn-success">
+                            <i class="fas fa-video"></i> 开启摄像头
+                        </button>
+                        <button id="captureInspection" class="btn btn-success" disabled>
+                            <i class="fas fa-camera-retro"></i> 拍摄检测
+                        </button>
+                        <button id="uploadInspection" class="btn btn-success">
+                            <i class="fas fa-upload"></i> 上传检测图
+                        </button>
+                    </div>
+                </div>
+                <div class="image-container">
+                    <video id="cameraFeed" autoplay playsinline></video>
+                    <canvas id="inspectionCanvas"></canvas>
+                    <div class="placeholder" id="inspectionPlaceholder">
+                        <i class="fas fa-camera fa-3x"></i>
+                        <p>点击开启摄像头进行检测</p>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="info-item">
+                        <span class="label">摄像头状态:</span>
+                        <span id="cameraStatus">未开启</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">比对结果:</span>
+                        <span id="inspectionResult">等待检测</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">置信度:</span>
+                        <span id="confidenceLevel">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 控制面板 -->
+            <section class="control-panel">
+                <div class="control-group">
+                    <h3><i class="fas fa-sliders-h"></i> 检测参数设置</h3>
+                    
+                    <div class="parameter">
+                        <label for="sensitivity">检测灵敏度:</label>
+                        <input type="range" id="sensitivity" min="1" max="100" value="75">
+                        <span id="sensitivityValue">75%</span>
+                    </div>
+                    
+                    <div class="parameter">
+                        <label for="matchThreshold">匹配阈值:</label>
+                        <input type="range" id="matchThreshold" min="50" max="100" value="85">
+                        <span id="matchThresholdValue">85%</span>
+                    </div>
+                    
+                    <div class="parameter">
+                        <label for="inspectionType">检测类型:</label>
+                        <select id="inspectionType" class="dropdown">
+                            <option value="all">全面检测</option>
+                            <option value="count">元件数量</option>
+                            <option value="position">元件位置</option>
+                            <option value="orientation">元件方向</option>
+                            <option value="solder">焊接质量</option>
+                        </select>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" id="enableMarking" checked>
+                            <span>显示标记框</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="enableSound" checked>
+                            <span>声音提示</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" id="autoCapture">
+                            <span>自动拍摄</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><i class="fas fa-tasks"></i> 检测结果</h3>
+                    <div class="results-container">
+                        <div class="result-item">
+                            <span class="result-label">元件数量:</span>
+                            <span id="resultCount" class="result-value">-/-</span>
+                            <span id="resultCountStatus" class="status-icon"></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">焊接质量:</span>
+                            <span id="resultSolder" class="result-value">-</span>
+                            <span id="resultSolderStatus" class="status-icon"></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">元件方向:</span>
+                            <span id="resultOrientation" class="result-value">-</span>
+                            <span id="resultOrientationStatus" class="status-icon"></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">极性检查:</span>
+                            <span id="resultPolarity" class="result-value">-</span>
+                            <span id="resultPolarityStatus" class="status-icon"></span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">总体结果:</span>
+                            <span id="resultOverall" class="result-value overall">等待检测</span>
+                        </div>
+                    </div>
+                    
+                    <button id="runInspection" class="btn btn-primary btn-large">
+                        <i class="fas fa-play"></i> 开始比对检测
+                    </button>
+                    
+                    <button id="exportReport" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> 导出报告
+                    </button>
+                </div>
+            </section>
+
+            <!-- 检测详情面板 -->
+            <section class="details-panel">
+                <div class="details-header">
+                    <h3><i class="fas fa-list"></i> 检测详情</h3>
+                    <button id="clearDetails" class="btn btn-small">
+                        <i class="fas fa-trash"></i> 清除
+                    </button>
+                </div>
+                <div class="details-content" id="detectionDetails">
+                    <div class="empty-details">
+                        <i class="fas fa-info-circle"></i>
+                        <p>检测结果将显示在这里</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 模态窗口 -->
+        <div id="cameraModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>选择摄像头</h3>
+                    <button class="close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <select id="cameraSelect" class="dropdown">
+                        <option value="">请选择摄像头...</option>
+                    </select>
+                    <div class="modal-preview">
+                        <video id="modalCameraFeed" autoplay playsinline></video>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="confirmCamera" class="btn btn-primary">确认选择</button>
+                    <button class="close-modal btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 音频元素 -->
+        <audio id="successSound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
+        <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
+        <audio id="captureSound" src="https://assets.mixkit.co/sfx/preview/mixkit-camera-shutter-click-1133.mp3" preload="auto"></audio>
+
+        <!-- 隐藏的文件输入 -->
+        <input type="file" id="fileInputStandard" accept="image/*" style="display: none;">
+        <input type="file" id="fileInputInspection" accept="image/*" style="display: none;">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
